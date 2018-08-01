@@ -1,3 +1,9 @@
+---
+show: step
+version: 1.0
+enable_checker: true
+---
+
 # 守护进程 Daemon 实现服务器
 
 ## 一、实验说明
@@ -56,7 +62,7 @@ Redis服务是一种C/S模型，提供请求－响应式协议的TCP服务，所
 
 ### 3.1 实验环境
 
-进入`Code`文件夹，创立`PyRedis`文件，再在其中创建`src`文件，最后创建`daemon.py`文件。
+进入`Code`文件夹，创立`PyRedis`文件夹，再在其中创建`src`文件夹，在 `src` 文件夹里创建`daemon.py`文件。
 
 因为我们要创建一个完整规范的项目，所以我们一开始就要求规范的文件目录。
 
@@ -70,20 +76,26 @@ Redis服务是一种C/S模型，提供请求－响应式协议的TCP服务，所
 import sys, os, time, atexit, signal
 
 class Daemon:
-
     def __init__(self, pidfile):
         self.pidfile = pidfile # pidfile是控制进程的文件
 ```
 
+```checker
+- name: 检查是否存在文件夹 PyRedis/src
+  script: |
+    #!/bin/bash
+    ls -l /home/shiyanlou/Code/PyRedis/src/
+  error: | 
+    我们发现您还没有创建文件夹 /home/shiyanlou/Code/PyRedis/src/
+```
 ### 3.2 实现daemon
 
 创建daemonize守护进程方法:
 
 ```python 
-def daemonize(self):
-
+    def daemonize(self):
 ```
->4.2小节接下来的代码，都是在这个方法里面写。
+>3.2小节接下来的代码，都是在这个方法里面写。
 >
 >实现方法基于《Advanced Programming in The Unix Environment  Section》中关于守护进程的实现规范
 
@@ -94,7 +106,6 @@ def daemonize(self):
 下面直接放上代码:
 
 ```python
-
         try:
             pid = os.fork() #生成子进程
             if pid > 0:
@@ -102,9 +113,7 @@ def daemonize(self):
         except OSError as err:
             sys.stderr.write('fork #1 failed: {0}\n'.format(err))
             sys.exit(1)
-
 ```
-
 代码讲解：为了达到上述的目的，我们调用`fork`创建了子进程，使用`exit`使父进程退出。除此之外，我们使用了异常处理机制来捕获错误。
 
 #### 3.2.2 在子进程中创建新会话
@@ -120,10 +129,9 @@ setsid函数用于创建一个新的会话，并担任该会话组的组长。�
 实现代码很简单：
 
 ```python
-		
 		os.chdir('/') #修改工作目录   
-        os.setsid()  #设置新的会话连接  
-        os.umask(0)  #重新设置文件创建权限  
+		os.setsid()  #设置新的会话连接  
+		os.umask(0)  #重新设置文件创建权限  
 ```
 
 
@@ -153,8 +161,7 @@ setsid函数用于创建一个新的会话，并担任该会话组的组长。�
 
 
 ```python
-
- 		# 进程已经是守护进程了，重定向标准文件描述符
+		# 进程已经是守护进程了，重定向标准文件描述符
         sys.stdout.flush()
         sys.stderr.flush()
         si = open(os.devnull, 'r')
@@ -165,7 +172,6 @@ setsid函数用于创建一个新的会话，并担任该会话组的组长。�
         os.dup2(si.fileno(), sys.stdin.fileno())         
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
-
 ```
 
 #### 3.2.5 注册退出函数
@@ -176,10 +182,9 @@ setsid函数用于创建一个新的会话，并担任该会话组的组长。�
 # 注意是在daemonize方法外写
     def delpid(self): # 删除pid
         os.remove(self.pidfile)
-
 ```
 
-接着，在`daemonize`方法内，
+接着，**回到`daemonize`方法内，**
 
 ```python
  		# 注册删除pid函数
@@ -222,7 +227,6 @@ setsid函数用于创建一个新的会话，并担任该会话组的组长。�
         # 守护进程没有运行，启动守护进程
         self.daemonize()
         self.run()
-
 ```
 
 #### 3.3.2 关闭进程
@@ -289,9 +293,20 @@ setsid函数用于创建一个新的会话，并担任该会话组的组长。�
 
 现在，我们的守护进程类就编写完成，而且具有非常不错的扩展性。不只是本训练营的`PyRedis`可以使用，你可以通过基础守护进程类重写run方法，来搭建你想搭建的任何服务！
 
+```checker
+- name: 检查是否存在文件 daemon.py
+  script: |
+    #!/bin/bash
+    ls -l /home/shiyanlou/Code/PyRedis/src/daemon.py
+  error: | 
+    我们发现您还没有创建文件 /home/shiyanlou/Code/PyRedis/src/daemon.py
+```
+
+
+
 ## 四、测试
 
-现在我们新建一个`test_daemon.py`来测试我们创建的守护进程。
+现在我们新建一个`testDaemon.py`来测试我们创建的守护进程。
 
 
 #### 4.1 重写run方法
@@ -358,6 +373,14 @@ if __name__ == '__main__':
         sys.exit(2)
 ```
 
+```checker
+- name: 检查是否存在文件 testDaemon.py
+  script: |
+    #!/bin/bash
+    ls -l /home/shiyanlou/Code/PyRedis/src/testDaemon.py
+  error: | 
+    我们发现您还没有创建文件 /home/shiyanlou/Code/PyRedis/src/test_daemon.py
+```
 
 #### 4.3 测试
 
@@ -371,6 +394,8 @@ if __name__ == '__main__':
 ![2-4.3-2](https://doc.shiyanlou.com/document-uid731737labid7232timestamp1532688119958.png/wm)
 
 做到现在，我们完成了`PyRedis`的服务器，接下来我们将做的是将服务器的功能一一实现。
+
+
 
 
 ## 五、完整代码
